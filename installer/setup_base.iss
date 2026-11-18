@@ -1,3 +1,15 @@
+#ifndef UrlPainelPadrao
+#define UrlPainelPadrao "https://riobrancodosul-saude.ids.inf.br/riobrancodosul/painel/idspaiele.dll"
+#endif
+
+#ifndef UrlExtensaoPadrao
+#define UrlExtensaoPadrao "https://raw.githubusercontent.com/prefeitura-rio-branco-do-sul/extensao_painel_ids_estilo/main/updates.xml"
+#endif
+
+#ifndef IdExtensaoPadrao
+#define IdExtensaoPadrao "gclbcjhjbpibjakacaakcgdomkkefmaj"
+#endif
+
 [Setup]
 AppName={#NomeApp}
 AppPublisher={#NomePublisher}
@@ -20,6 +32,7 @@ Name: "portuguesebr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\credentials"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\logs"; Permissions: users-modify
+Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\chrome_profile"; Permissions: users-modify
 
 [Files]
 Source: "..\dist\main.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
@@ -36,7 +49,12 @@ Name: "{userdesktop}\{#NomeApp}"; Filename: "{app}\{#NomeExe}.exe"; IconFilename
 
 [Registry]
 Root: HKLM64; Subkey: "Software\{#NomePublisher}\{#NomeInstalador}"; ValueType: string; ValueName: "UrlPainel"; ValueData: "{code:GetUrlPainel}"; Flags: uninsdeletekey
+Root: HKLM64; Subkey: "Software\{#NomePublisher}\{#NomeInstalador}"; ValueType: string; ValueName: "UrlExtensao"; ValueData: "{code:GetUrlExtensao}"; Flags: uninsdeletekey
+Root: HKLM64; Subkey: "Software\{#NomePublisher}\{#NomeInstalador}"; ValueType: string; ValueName: "IdExtensao"; ValueData: "{code:GetIdExtensao}"; Flags: uninsdeletekey
 
+; Diretivas de política para o Google Chrome e Microsoft Edge carregarem a extensão automaticamente
+Root: HKLM64; Subkey: "Software\Policies\Google\Chrome\ExtensionInstallForcelist"; ValueType: string; ValueName: "1"; ValueData: "{code:GetExtensionForcelistEntry}"; Flags: uninsdeletevalue; Check: HasExtensionConfigured
+Root: HKLM64; Subkey: "Software\Policies\Microsoft\Edge\ExtensionInstallForcelist"; ValueType: string; ValueName: "1"; ValueData: "{code:GetExtensionForcelistEntry}"; Flags: uninsdeletevalue; Check: HasExtensionConfigured
 
 [Run]
 Filename: "certutil.exe"; Parameters: "-addstore ""TrustedPublisher"" ""{app}\bin\vdd\mttvdd.cat"""; WorkingDir: "{app}\bin\vdd"; StatusMsg: "Aprovando certificado de hardware..."; Flags: runhidden
@@ -53,14 +71,39 @@ procedure InitializeWizard;
 begin
   ConfigPage := CreateInputQueryPage(wpSelectDir,
     'Configuração do Sistema', 'Defina os parâmetros globais do painel.',
-    'Por favor, insira a URL de destino.');
+    'Por favor, insira as configurações de destino.');
 
   ConfigPage.Add('URL do Painel:', False);
+  ConfigPage.Add('URL da Extensão de Estilo (updates.xml):', False);
 
-  ConfigPage.Values[0] := 'https://riobrancodosul-saude.ids.inf.br/riobrancodosul/painel/idspaiele.dll';
+  ConfigPage.Values[0] := '{#UrlPainelPadrao}';
+  ConfigPage.Values[1] := '{#UrlExtensaoPadrao}';
 end;
 
 function GetUrlPainel(Param: String): String;
 begin
-  Result := ConfigPage.Values[0];
+  Result := Trim(ConfigPage.Values[0]);
+end;
+
+function GetUrlExtensao(Param: String): String;
+begin
+  Result := Trim(ConfigPage.Values[1]);
+end;
+
+function GetIdExtensao(Param: String): String;
+begin
+  Result := '{#IdExtensaoPadrao}';
+end;
+
+function GetExtensionForcelistEntry(Param: String): String;
+begin
+  if Trim(ConfigPage.Values[1]) <> '' then
+    Result := '{#IdExtensaoPadrao};' + Trim(ConfigPage.Values[1])
+  else
+    Result := '';
+end;
+
+function HasExtensionConfigured: Boolean;
+begin
+  Result := Trim(ConfigPage.Values[1]) <> '';
 end;

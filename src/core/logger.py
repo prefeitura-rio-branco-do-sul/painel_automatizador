@@ -62,9 +62,12 @@ def _setup_logger() -> logging.Logger:
         console_handler.setFormatter(formatter)
         app_logger.addHandler(console_handler)
 
-        file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-        file_handler.setFormatter(formatter)
-        app_logger.addHandler(file_handler)
+        try:
+            file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
+            file_handler.setFormatter(formatter)
+            app_logger.addHandler(file_handler)
+        except Exception:
+            pass
     
     logging.getLogger("pywebview").setLevel(logging.ERROR)
     logging.getLogger("comtypes").setLevel(logging.ERROR)

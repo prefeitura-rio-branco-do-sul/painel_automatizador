@@ -5,14 +5,16 @@ from src.utils.template_engine import TemplateEngine
 from src.drivers.virtual_display import VirtualDisplayManager
 
 class ConfigAdminAPI(BaseWebviewAPI):
-    def save_settings(self, url: str):
+    def save_settings(self, url: str, extension_url: str = "", extension_id: str = ""):
         """
         Recebe os dados da interface HTML e salva no registro do Windows.
         
         Args:
             url (str): A URL do sistema alvo.
+            extension_url (str): A URL de atualização (updates.xml) da extensão.
+            extension_id (str): O ID da extensão no Chrome.
         """
-        success = Config.save_app_config(url)
+        success = Config.save_app_config(url, extension_url, extension_id)
         if success:
             self.show_alert("Configurações salvas no Registro do Windows com sucesso! Reinicie o aplicativo.")
             self.close_window()
@@ -53,11 +55,13 @@ class AdminWindowManager:
             "admin.js",
             {
                 "CURRENT_URL": current_config.get("url", ""),
+                "CURRENT_EXTENSION_URL": current_config.get("extension_url", ""),
+                "CURRENT_EXTENSION_ID": current_config.get("extension_id", ""),
                 "STATUS_DRIVER": status_driver
             }
         )
 
-        win_w, win_h = Config.get_adaptive_window_size(650, 660)
+        win_w, win_h = Config.get_adaptive_window_size(650, 780)
         webview.create_window(
             title="Configuração Avançada - TI",
             html=html_content,
@@ -65,6 +69,6 @@ class AdminWindowManager:
             width=win_w,
             height=win_h,
             resizable=True,
-            min_size=(380, 420)
+            min_size=(380, 500)
         )
         webview.start()

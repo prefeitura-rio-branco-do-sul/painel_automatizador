@@ -6,6 +6,9 @@ Aplicação desenvolvida em Python para automação, autenticação, exibição 
 
 ## 🚀 Recursos Principais
 
+- **Suporte a Extensões de Estilo do Chrome/Edge (Perfil Persistente + GPO)**:
+  - **Perfil Compartilhado Persistente (`launch_persistent_context`)**: O navegador utiliza um perfil local fixo em `C:\ProgramData`, permitindo que extensões, cache e dados permaneçam salvos sem necessidade de download a cada sessão.
+  - **Instalação e Gestão via Políticas Corporativas**: Integração nativa com `ExtensionInstallForcelist` (Chrome e Edge) gravada pelo instalador e configurável via Painel Admin (`--config`), eliminando a necessidade de scripts `.reg` avulsos.
 - **Transmissão Automática para TVs (Google Cast via CDP & mDNS)**:
   - **Descoberta Instantânea (mDNS)**: Escaneia todas as interfaces de rede locais via pacotes UDP mDNS (`_googlecast._tcp.local` na porta `5353`) para listar as TVs disponíveis em ~100ms na tela de login, sem precisar abrir o navegador.
   - **Espelhamento 100% Automatizado (`Cast.startDesktopMirroring`)**: Utiliza o domínio `Cast` do Chrome DevTools Protocol combinado com `--auto-select-desktop-capture-source` e relay mDNS em segundo plano para espelhar automaticamente o monitor virtual na TV escolhida assim que o login é iniciado.
@@ -81,7 +84,7 @@ python installer/build.py
 iscc.exe installer/setup.iss
 ```
 
-O instalador final (`Instalador_InicializadorPainelIDS_v1.7.exe`) será gerado na pasta `releases/v1.7/`.
+O instalador final (`Instalador_InicializadorPainelIDS_v1.8.exe`) será gerado na pasta `releases/v1.8/`.
 
 ---
 
