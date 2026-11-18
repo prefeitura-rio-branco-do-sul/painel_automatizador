@@ -23,15 +23,18 @@ class AutomationService:
         capture_source = f"Tela {monitor_count}" if monitor_count > 1 else "Tela inteira"
         target_cast = (credentials.get("dispositivo_cast") or "").strip()
 
+        user_data_dir = Config.get_browser_profile_path()
         log.info(
-            f"Inicializando Chromium nas coordenadas X={pos_x}, Y={pos_y} "
+            f"Inicializando Chromium (Perfil: '{user_data_dir}') nas coordenadas X={pos_x}, Y={pos_y} "
             f"(Fonte de captura automática: '{capture_source}', TV alvo: '{target_cast or 'Nenhuma'}')"
         )
 
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
             browser_kwargs = {
+                "user_data_dir": user_data_dir,
                 "headless": False,
+                "viewport": {"width": 1920, "height": 1080},
                 "ignore_default_args": Config.get_cast_ignore_default_args(),
                 "args": [
                     f"--window-position={pos_x},{pos_y}",
@@ -47,9 +50,8 @@ class AutomationService:
             if browser_executable_path:
                 browser_kwargs["executable_path"] = browser_executable_path
 
-            browser = p.chromium.launch(**browser_kwargs)
-            context = browser.new_context(viewport={"width": 1920, "height": 1080})
-            page = context.new_page()
+            context = p.chromium.launch_persistent_context(**browser_kwargs)
+            page = context.pages[0] if context.pages else context.new_page()
 
             cdp_client = context.new_cdp_session(page)
 
@@ -134,8 +136,7 @@ class AutomationService:
                 log.error(f"Finalizado por interrupção ou erro inesperado: {e}")
             finally:
                 try:
-                    if browser.is_connected():
-                        browser.close()
+                    context.close()
                 except Exception:
                     pass
 

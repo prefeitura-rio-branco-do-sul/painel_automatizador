@@ -10,6 +10,7 @@ __pycache__/
 # Credenciais locais e armazenamento de dados sensíveis
 credentials/
 credentials.json
+chrome_profile/
 
 # Logs da aplicação
 logs/

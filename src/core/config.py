@@ -16,6 +16,13 @@ class Config:
     REGISTRY_PATH = r"SOFTWARE\PMRBS\InicializadorPainelIDS"
     APP_DATA_FOLDER_NAME = "PMRBS Inicializador do Painel IDS"
 
+    DEFAULT_PANEL_URL = "https://riobrancodosul-saude.ids.inf.br/riobrancodosul/painel/idspaiele.dll"
+    DEFAULT_EXTENSION_ID = "gclbcjhjbpibjakacaakcgdomkkefmaj"
+    DEFAULT_EXTENSION_URL = "https://raw.githubusercontent.com/prefeitura-rio-branco-do-sul/extensao_painel_ids_estilo/main/updates.xml"
+
+    CHROME_FORCELIST_PATH = r"SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist"
+    EDGE_FORCELIST_PATH = r"SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist"
+
     @staticmethod
     def is_compiled() -> bool:
         """
@@ -45,31 +52,58 @@ class Config:
         """
         Retorna as configurações seguindo a hierarquia de prioridades.
         1. Variáveis de Ambiente (.env)
-        2. Registro do Windows (HKLM)
+        2. Registro do Windows (HKLM da aplicação ou políticas corporativas do navegador)
         3. Fallback (Arquivo local config.json em ProgramData ou LocalAppData)
+        4. Valores padrão do sistema
 
         Returns:
-            dict: Dicionário contendo 'url'.
+            dict: Dicionário contendo 'url', 'extension_url' e 'extension_id'.
         """
         # 1. Variáveis de Ambiente (.env) - Prioridade Máxima
         env_url = os.getenv("PAINEL_URL")
-        
-        if env_url:
-            return {
-                "url": env_url
-            }
+        env_ext_url = os.getenv("PAINEL_EXTENSION_URL")
+        env_ext_id = os.getenv("PAINEL_EXTENSION_ID")
 
         # 2. Registro do Windows
+        reg_url = None
+        reg_ext_url = None
+        reg_ext_id = None
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, Config.REGISTRY_PATH) as key:
-                reg_url, _ = winreg.QueryValueEx(key, "UrlPainel")
-                return {
-                    "url": reg_url
-                }
+                try:
+                    reg_url, _ = winreg.QueryValueEx(key, "UrlPainel")
+                except WindowsError:
+                    pass
+                try:
+                    reg_ext_url, _ = winreg.QueryValueEx(key, "UrlExtensao")
+                except WindowsError:
+                    pass
+                try:
+                    reg_ext_id, _ = winreg.QueryValueEx(key, "IdExtensao")
+                except WindowsError:
+                    pass
         except WindowsError:
             pass
 
+        # Se a extensão não foi encontrada na chave da aplicação, consulta a política oficial do Chrome/Edge
+        if not reg_ext_url:
+            for pol_path in [Config.CHROME_FORCELIST_PATH, Config.EDGE_FORCELIST_PATH]:
+                try:
+                    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, pol_path) as pol_key:
+                        val, _ = winreg.QueryValueEx(pol_key, "1")
+                        if ";" in val:
+                            parts = val.split(";", 1)
+                            if not reg_ext_id:
+                                reg_ext_id = parts[0].strip()
+                            reg_ext_url = parts[1].strip()
+                            break
+                except WindowsError:
+                    pass
+
         # 3. Fallback (Arquivo config.json global da máquina ou por usuário)
+        fallback_url = None
+        fallback_ext_url = None
+        fallback_ext_id = None
         fallback_paths = [
             os.path.join(os.environ.get("PROGRAMDATA", r"C:\ProgramData"), Config.APP_DATA_FOLDER_NAME, "config.json"),
             os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), Config.APP_DATA_FOLDER_NAME, "config.json"),
@@ -79,29 +113,70 @@ class Config:
                 try:
                     with open(fallback_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                        return {
-                            "url": data.get("url", "")
-                        }
+                        fallback_url = data.get("url")
+                        fallback_ext_url = data.get("extension_url")
+                        fallback_ext_id = data.get("extension_id")
+                        break
                 except Exception:
                     pass
         
-        # Default de segurança caso nada esteja configurado
-        return {"url": ""}
+        final_url = env_url or reg_url or fallback_url or Config.DEFAULT_PANEL_URL
+        final_ext_url = env_ext_url if env_ext_url is not None else (reg_ext_url or fallback_ext_url or Config.DEFAULT_EXTENSION_URL)
+        final_ext_id = env_ext_id if env_ext_id is not None else (reg_ext_id or fallback_ext_id or Config.DEFAULT_EXTENSION_ID)
+
+        return {
+            "url": final_url.strip() if final_url else "",
+            "extension_url": final_ext_url.strip() if final_ext_url else "",
+            "extension_id": final_ext_id.strip() if final_ext_id else Config.DEFAULT_EXTENSION_ID,
+        }
     
     @staticmethod
-    def save_app_config(url: str) -> bool:
+    def save_app_config(url: str, extension_url: str = None, extension_id: str = None) -> bool:
         """
-        Salva as configurações de volta no Registro do Windows.
+        Salva as configurações de volta no Registro do Windows (HKLM) da aplicação e
+        sincroniza a política corporativa de extensões do Chrome e Edge.
         Requer que o script esteja rodando com privilégios de Administrador.
 
         Args:
             url (str): URL do painel.
+            extension_url (str, optional): URL de atualização (updates.xml) da extensão.
+            extension_id (str, optional): ID da extensão no Chrome.
         Returns:
             bool: True se salvou com sucesso, False caso contrário.
         """
         try:
+            # 1. Grava no registro do próprio aplicativo
             with winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, Config.REGISTRY_PATH, 0, winreg.KEY_ALL_ACCESS) as key:
-                winreg.SetValueEx(key, "UrlPainel", 0, winreg.REG_SZ, url)
+                winreg.SetValueEx(key, "UrlPainel", 0, winreg.REG_SZ, url.strip())
+                if extension_url is not None:
+                    winreg.SetValueEx(key, "UrlExtensao", 0, winreg.REG_SZ, extension_url.strip())
+                if extension_id is not None:
+                    winreg.SetValueEx(key, "IdExtensao", 0, winreg.REG_SZ, extension_id.strip())
+
+            # 2. Sincroniza com as políticas corporativas do Chrome e Edge
+            ext_url = (extension_url if extension_url is not None else Config.DEFAULT_EXTENSION_URL).strip()
+            ext_id = (extension_id if extension_id is not None and extension_id.strip() else Config.DEFAULT_EXTENSION_ID).strip()
+
+            target_policies = [
+                Config.CHROME_FORCELIST_PATH,
+                Config.EDGE_FORCELIST_PATH,
+            ]
+
+            for pol_path in target_policies:
+                try:
+                    if ext_url:
+                        entry_value = f"{ext_id};{ext_url}"
+                        with winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, pol_path, 0, winreg.KEY_ALL_ACCESS) as pol_key:
+                            winreg.SetValueEx(pol_key, "1", 0, winreg.REG_SZ, entry_value)
+                    else:
+                        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, pol_path, 0, winreg.KEY_ALL_ACCESS) as pol_key:
+                            try:
+                                winreg.DeleteValue(pol_key, "1")
+                            except FileNotFoundError:
+                                pass
+                except Exception as pol_err:
+                    log.warning(f"Não foi possível atualizar a política em '{pol_path}': {pol_err}")
+
             return True
         except PermissionError:
             log.error("Permissão negada. O aplicativo não foi executado como Administrador.")
@@ -142,6 +217,30 @@ class Config:
             return os.path.join(base_path, "static", filename)
         return os.path.join(base_path, "ui", "static", filename)
     
+    @staticmethod
+    def get_browser_profile_path() -> str:
+        """
+        Retorna o caminho do perfil de navegador persistente compartilhado na máquina,
+        permitindo que extensões instaladas via políticas, cache e preferências locais permaneçam salvos.
+
+        Returns:
+            str: Caminho absoluto para a pasta de perfil do navegador.
+        """
+        if Config.is_compiled():
+            base_dir = os.path.join(
+                os.environ.get("PROGRAMDATA", r"C:\ProgramData"),
+                Config.APP_DATA_FOLDER_NAME
+            )
+        else:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+        
+        profile_dir = os.path.join(base_dir, "chrome_profile")
+        try:
+            os.makedirs(profile_dir, exist_ok=True)
+        except OSError:
+            pass
+        return profile_dir
+
     @staticmethod
     def get_storage_path() -> str:
         """
