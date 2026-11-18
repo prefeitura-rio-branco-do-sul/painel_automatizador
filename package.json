@@ -1,0 +1,34 @@
+{
+  "name": "painel-automatizador",
+  "version": "1.8.0",
+  "description": "Inicializador autônomo em Python para automação, autenticação, exibição em monitor virtual e transmissão via Google Cast (CDP) do painel eletrônico IDS Saúde.",
+  "main": "src/main.py",
+  "scripts": {
+    "start": "python -m src.main",
+    "auto": "python -m src.main --auto",
+    "config": "python -m src.main --config",
+    "build": "python installer/build.py",
+    "installer": "iscc.exe installer/setup.iss",
+    "pack": "powershell ./installer/build.ps1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prefeitura-rio-branco-do-sul/painel_automatizador.git"
+  },
+  "keywords": [
+    "python",
+    "playwright",
+    "google-cast",
+    "chrome-devtools-protocol",
+    "nuitka",
+    "inno-setup",
+    "virtual-display",
+    "rio-branco-do-sul",
+    "ids-saude",
+    "painel-eletronico",
+    "unigui",
+    "extjs"
+  ],
+  "author": "Departamento de Tecnologia da Informação (DETEC) - Prefeitura Municipal de Rio Branco do Sul",
+  "license": "MIT"
+}
