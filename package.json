@@ -1,6 +1,6 @@
 {
   "name": "painel-automatizador",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Inicializador autônomo em Python para automação, autenticação, exibição em monitor virtual e transmissão via Google Cast (CDP) do painel eletrônico IDS Saúde.",
   "main": "src/main.py",
   "scripts": {
@@ -9,7 +9,8 @@
     "config": "python -m src.main --config",
     "build": "python installer/build.py",
     "installer": "iscc.exe installer/setup.iss",
-    "pack": "powershell ./installer/build.ps1"
+    "pack": "powershell ./installer/build.ps1",
+    "release": "python scripts/release.py"
   },
   "repository": {
     "type": "git",

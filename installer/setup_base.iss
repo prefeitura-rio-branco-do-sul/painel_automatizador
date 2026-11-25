@@ -26,7 +26,6 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=yes
 RestartApplications=no
-CloseApplicationsTimeout=15
 
 [Languages]
 Name: "portuguesebr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"

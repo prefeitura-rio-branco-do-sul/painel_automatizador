@@ -2,12 +2,19 @@
 
 Todas as modificações notáveis neste projeto são documentadas neste arquivo.
 
-## [1.8.0] - 2026-11-18
+## [1.9.0] - 2026-11-25
 
 ### Adicionado
 - Serviço nativo de Auto-Atualização (`UpdaterService`) integrado ao GitHub Releases e Inno Setup, com download assíncrono e aplicação silenciosa (`/VERYSILENT`).
 - Verificação e aplicação automática de updates antes da inicialização do painel no modo autônomo (`--auto`).
 - Painel Administrativo (`--config`) com verificação manual de atualizações e botão de instalação com um clique.
+- Script automatizado de criação de releases (`scripts/release.py`) com sincronização de versão, compilação Nuitka/Inno Setup e publicação via GitHub CLI.
+
+---
+
+## [1.8.0] - 2026-11-18
+
+### Adicionado
 - Suporte a extensões de customização de estilo do Google Chrome e Microsoft Edge via políticas corporativas (`ExtensionInstallForcelist`).
 - Configuração de perfil persistente compartilhado (`launch_persistent_context`) em `C:\ProgramData\PMRBS Inicializador do Painel IDS\chrome_profile`, eliminando o download assíncrono repetitivo da extensão e mantendo dados e cache salvos em disco.
 - Gerenciamento de extensões integrado ao assistente do Instalador Inno Setup (`setup_base.iss`) com parâmetros pré-configurados para a URL de atualização (`updates.xml`) e ID da extensão.
