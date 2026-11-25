@@ -11,6 +11,7 @@ __pycache__/
 credentials/
 credentials.json
 chrome_profile/
+updates/
 
 # Logs da aplicação
 logs/

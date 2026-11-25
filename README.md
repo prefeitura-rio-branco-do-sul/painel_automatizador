@@ -6,6 +6,10 @@ Aplicação desktop desenvolvida pelo **Departamento de Tecnologia da Informaç�
 
 ## Principais Recursos
 
+- **Atualização Automática Silenciosa (GitHub Releases + Inno Setup)**:
+  - **Detecção Inteligente de Versões**: Consulta assíncrona à API pública do GitHub Releases (`/releases/latest`) para identificar novas versões publicadas sem lentidão na inicialização.
+  - **Atualização 100% Silenciosa (`--auto`)**: No modo autônomo, baixa o instalador em background e executa a atualização silenciosa (`/VERYSILENT`), preservando as credenciais e configurações e reiniciando a aplicação com a nova versão.
+  - **Gestão Manual no Painel Admin (`--config`)**: Permite à equipe de TI verificar atualizações sob demanda e disparar a instalação diretamente pela interface.
 - **Suporte a Extensões de Estilo do Chrome/Edge (Perfil Persistente + GPO)**:
   - **Perfil Compartilhado Persistente (`launch_persistent_context`)**: O navegador utiliza um perfil local fixo em `C:\ProgramData\PMRBS Inicializador do Painel IDS\chrome_profile`, permitindo que extensões institucionais, cache e dados permaneçam salvos sem necessidade de download assíncrono a cada inicialização.
   - **Instalação e Gestão via Políticas Corporativas**: Integração nativa com `ExtensionInstallForcelist` (Chrome e Edge) gravada pelo instalador e configurável via Painel Admin (`--config`), eliminando a necessidade de scripts `.reg` avulsos.
@@ -39,10 +43,12 @@ painel_automatizador/
 │   └── setup_base.iss         # Script base do instalador Inno Setup e assistente
 ├── logs/                      # Histórico de logs rotativos da aplicação
 ├── releases/                  # Instaladores executáveis finais gerados por versão (.exe)
+├── scripts/                   # Scripts de automação do projeto
+│   └── release.py             # Orquestrador automatizado de releases e publicação
 ├── src/                       # Código-fonte da aplicação
 │   ├── core/                  # Módulos centrais (Config, Logger, CredentialsRepository DPAPI)
 │   ├── drivers/               # Gerenciador de hardware/display virtual (VirtualDisplayManager)
-│   ├── services/              # Serviços de automação Playwright/Cast e busca mDNS/HTTP
+│   ├── services/              # Serviços de automação Playwright/Cast, auto-updater e busca mDNS/HTTP
 │   ├── ui/                    # Interfaces gráficas Edge WebView2 (HTML, CSS responsivo, JS)
 │   └── main.py                # Ponto de entrada e roteamento de argumentos da aplicação
 ├── .env                       # Configuração de ambiente local para desenvolvimento
@@ -98,6 +104,7 @@ No terminal, na raiz do projeto, você pode executar tanto via `npm` quanto cham
 | `npm run build` | `python installer/build.py` | Compila o executável standalone em código C nativo com Nuitka. |
 | `npm run installer` | `iscc.exe installer/setup.iss` | Gera o instalador executável via Inno Setup 6. |
 | `npm run pack` | `powershell ./installer/build.ps1` | Executa o build completo e a geração do instalador em um único comando. |
+| `npm run release` | `python scripts/release.py` | Orquestra a release completa (versão, build, commit, tag e GitHub Release). |
 
 ---
 
@@ -118,7 +125,7 @@ python installer/build.py
 iscc.exe installer/setup.iss
 ```
 
-O instalador final (`Instalador_InicializadorPainelIDS_v1.8.exe`) será gerado na pasta `releases/v1.8/`.
+O instalador final (`Instalador_InicializadorPainelIDS_v1.9.exe`) será gerado na pasta `releases/v1.9/`.
 
 ---
 

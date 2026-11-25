@@ -36,6 +36,15 @@ def main():
         # 2. Rota de Auto-Inicialização (GPO/Startup)
         if "--auto" in sys.argv:
             log.info("Flag --auto detectada. Tentando inicialização silenciosa...")
+
+            # Verificação prévia de auto-update antes de iniciar o painel
+            try:
+                from src.services.updater import UpdaterService
+                if UpdaterService.run_auto_update_flow(restart_args=["--auto"]):
+                    sys.exit(0)
+            except Exception as update_err:
+                log.warning(f"Não foi possível verificar auto-update: {update_err}")
+
             from src.core.credentials_repo import CredentialsRepository, SecureCredentials
             loaded_data = CredentialsRepository.load()
             
@@ -54,6 +63,13 @@ def main():
                 log.warning("Modo --auto invocado, mas as credenciais estão ausentes ou incompletas. Recuando para a interface gráfica.")
 
         # 3. Rota Padrão (Interface Gráfica)
+        try:
+            import threading
+            from src.services.updater import UpdaterService
+            threading.Thread(target=UpdaterService.check_for_updates, daemon=True).start()
+        except Exception:
+            pass
+
         from src.ui.view import DesktopWindowManager
         credentials = DesktopWindowManager.capture_credentials()
         

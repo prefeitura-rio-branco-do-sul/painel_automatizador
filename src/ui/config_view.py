@@ -39,6 +39,33 @@ class ConfigAdminAPI(BaseWebviewAPI):
         else:
             self.show_alert("Erro. Verifique se o driver já foi instalado na máquina e se possui permissão de Administrador.")
 
+    def check_for_updates(self):
+        """
+        Verifica se há atualizações disponíveis no GitHub e retorna o status.
+        """
+        from src.services.updater import UpdaterService
+        info = UpdaterService.check_for_updates()
+        if info:
+            return {
+                "available": True,
+                "version": info["version"],
+                "name": info["name"],
+                "notes": info["notes"],
+                "size_mb": round(info["size"] / (1024 * 1024), 1) if info.get("size") else 0
+            }
+        return {"available": False, "version": Config.APP_VERSION}
+
+    def apply_update_now(self):
+        """
+        Dispara o download e a instalação silenciosa da nova versão.
+        """
+        import threading
+        from src.services.updater import UpdaterService
+        def _bg():
+            UpdaterService.run_auto_update_flow(restart_args=["--config"])
+        threading.Thread(target=_bg, daemon=True).start()
+        return True
+
 class AdminWindowManager:
     @staticmethod
     def open():
@@ -57,7 +84,8 @@ class AdminWindowManager:
                 "CURRENT_URL": current_config.get("url", ""),
                 "CURRENT_EXTENSION_URL": current_config.get("extension_url", ""),
                 "CURRENT_EXTENSION_ID": current_config.get("extension_id", ""),
-                "STATUS_DRIVER": status_driver
+                "STATUS_DRIVER": status_driver,
+                "APP_VERSION": Config.APP_VERSION
             }
         )
 

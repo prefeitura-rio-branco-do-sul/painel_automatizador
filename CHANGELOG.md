@@ -2,6 +2,16 @@
 
 Todas as modificações notáveis neste projeto são documentadas neste arquivo.
 
+## [1.9.0] - 2026-11-25
+
+### Adicionado
+- Serviço nativo de Auto-Atualização (`UpdaterService`) integrado ao GitHub Releases e Inno Setup, com download assíncrono e aplicação silenciosa (`/VERYSILENT`).
+- Verificação e aplicação automática de updates antes da inicialização do painel no modo autônomo (`--auto`).
+- Painel Administrativo (`--config`) com verificação manual de atualizações e botão de instalação com um clique.
+- Script automatizado de criação de releases (`scripts/release.py`) com sincronização de versão, compilação Nuitka/Inno Setup e publicação via GitHub CLI.
+
+---
+
 ## [1.8.0] - 2026-11-18
 
 ### Adicionado
