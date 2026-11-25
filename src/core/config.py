@@ -13,12 +13,14 @@ load_dotenv()
 
 class Config:
     TITULO_APP = "Painel de Chamamento - Inicializador Autônomo"
+    APP_VERSION = "1.8.0"
     REGISTRY_PATH = r"SOFTWARE\PMRBS\InicializadorPainelIDS"
     APP_DATA_FOLDER_NAME = "PMRBS Inicializador do Painel IDS"
 
     DEFAULT_PANEL_URL = "https://riobrancodosul-saude.ids.inf.br/riobrancodosul/painel/idspaiele.dll"
     DEFAULT_EXTENSION_ID = "gclbcjhjbpibjakacaakcgdomkkefmaj"
     DEFAULT_EXTENSION_URL = "https://raw.githubusercontent.com/prefeitura-rio-branco-do-sul/extensao_painel_ids_estilo/main/updates.xml"
+    DEFAULT_GITHUB_REPO = "prefeitura-rio-branco-do-sul/painel_automatizador"
 
     CHROME_FORCELIST_PATH = r"SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist"
     EDGE_FORCELIST_PATH = r"SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist"
@@ -63,11 +65,15 @@ class Config:
         env_url = os.getenv("PAINEL_URL")
         env_ext_url = os.getenv("PAINEL_EXTENSION_URL")
         env_ext_id = os.getenv("PAINEL_EXTENSION_ID")
+        env_repo = os.getenv("GITHUB_REPO")
+        env_auto_update = os.getenv("AUTO_UPDATE_ENABLED")
 
         # 2. Registro do Windows
         reg_url = None
         reg_ext_url = None
         reg_ext_id = None
+        reg_repo = None
+        reg_auto_update = None
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, Config.REGISTRY_PATH) as key:
                 try:
@@ -80,6 +86,14 @@ class Config:
                     pass
                 try:
                     reg_ext_id, _ = winreg.QueryValueEx(key, "IdExtensao")
+                except WindowsError:
+                    pass
+                try:
+                    reg_repo, _ = winreg.QueryValueEx(key, "UpdateRepo")
+                except WindowsError:
+                    pass
+                try:
+                    reg_auto_update, _ = winreg.QueryValueEx(key, "AutoUpdateEnabled")
                 except WindowsError:
                     pass
         except WindowsError:
@@ -104,6 +118,8 @@ class Config:
         fallback_url = None
         fallback_ext_url = None
         fallback_ext_id = None
+        fallback_repo = None
+        fallback_auto_update = None
         fallback_paths = [
             os.path.join(os.environ.get("PROGRAMDATA", r"C:\ProgramData"), Config.APP_DATA_FOLDER_NAME, "config.json"),
             os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), Config.APP_DATA_FOLDER_NAME, "config.json"),
@@ -116,6 +132,8 @@ class Config:
                         fallback_url = data.get("url")
                         fallback_ext_url = data.get("extension_url")
                         fallback_ext_id = data.get("extension_id")
+                        fallback_repo = data.get("github_repo")
+                        fallback_auto_update = data.get("auto_update")
                         break
                 except Exception:
                     pass
@@ -123,15 +141,27 @@ class Config:
         final_url = env_url or reg_url or fallback_url or Config.DEFAULT_PANEL_URL
         final_ext_url = env_ext_url if env_ext_url is not None else (reg_ext_url or fallback_ext_url or Config.DEFAULT_EXTENSION_URL)
         final_ext_id = env_ext_id if env_ext_id is not None else (reg_ext_id or fallback_ext_id or Config.DEFAULT_EXTENSION_ID)
+        final_repo = env_repo or reg_repo or fallback_repo or Config.DEFAULT_GITHUB_REPO
+
+        if env_auto_update is not None:
+            final_auto_update = env_auto_update.strip().lower() not in ("0", "false", "no", "disabled")
+        elif reg_auto_update is not None:
+            final_auto_update = bool(reg_auto_update)
+        elif fallback_auto_update is not None:
+            final_auto_update = bool(fallback_auto_update)
+        else:
+            final_auto_update = True
 
         return {
             "url": final_url.strip() if final_url else "",
             "extension_url": final_ext_url.strip() if final_ext_url else "",
             "extension_id": final_ext_id.strip() if final_ext_id else Config.DEFAULT_EXTENSION_ID,
+            "github_repo": final_repo.strip() if final_repo else Config.DEFAULT_GITHUB_REPO,
+            "auto_update": final_auto_update
         }
     
     @staticmethod
-    def save_app_config(url: str, extension_url: str = None, extension_id: str = None) -> bool:
+    def save_app_config(url: str, extension_url: str = None, extension_id: str = None, github_repo: str = None) -> bool:
         """
         Salva as configurações de volta no Registro do Windows (HKLM) da aplicação e
         sincroniza a política corporativa de extensões do Chrome e Edge.
@@ -141,6 +171,7 @@ class Config:
             url (str): URL do painel.
             extension_url (str, optional): URL de atualização (updates.xml) da extensão.
             extension_id (str, optional): ID da extensão no Chrome.
+            github_repo (str, optional): Repositório GitHub para atualizações (owner/repo).
         Returns:
             bool: True se salvou com sucesso, False caso contrário.
         """
@@ -152,6 +183,8 @@ class Config:
                     winreg.SetValueEx(key, "UrlExtensao", 0, winreg.REG_SZ, extension_url.strip())
                 if extension_id is not None:
                     winreg.SetValueEx(key, "IdExtensao", 0, winreg.REG_SZ, extension_id.strip())
+                if github_repo is not None:
+                    winreg.SetValueEx(key, "UpdateRepo", 0, winreg.REG_SZ, github_repo.strip())
 
             # 2. Sincroniza com as políticas corporativas do Chrome e Edge
             ext_url = (extension_url if extension_url is not None else Config.DEFAULT_EXTENSION_URL).strip()
@@ -240,6 +273,30 @@ class Config:
         except OSError:
             pass
         return profile_dir
+
+    @staticmethod
+    def get_updates_dir() -> str:
+        r"""
+        Retorna o caminho absoluto para o diretório de download de atualizações
+        (em C:\ProgramData quando compilado, ou na pasta do projeto em modo dev).
+
+        Returns:
+            str: Caminho absoluto para a pasta de atualizações.
+        """
+        if Config.is_compiled():
+            base_dir = os.path.join(
+                os.environ.get("PROGRAMDATA", r"C:\ProgramData"),
+                Config.APP_DATA_FOLDER_NAME
+            )
+        else:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+        
+        updates_dir = os.path.join(base_dir, "updates")
+        try:
+            os.makedirs(updates_dir, exist_ok=True)
+        except OSError:
+            pass
+        return updates_dir
 
     @staticmethod
     def get_storage_path() -> str:

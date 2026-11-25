@@ -46,6 +46,20 @@
             <button id="btnDesligarDriver" style="background: #334155; width: 50%;">Desativar Monitor</button>
         </div>
 
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+        
+        <h2 class="title" style="margin-bottom: 5px;">Atualizações do Sistema</h2>
+        <p class="subtitle">Versão instalada: <strong>v{{APP_VERSION}}</strong></p>
+        
+        <div style="margin-top: 10px;">
+            <button id="btnVerificarUpdate" style="background: #0284c7; width: 100%;">Verificar Atualizações</button>
+        </div>
+        <div id="updateContainer" style="display: none; margin-top: 12px; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; text-align: center;">
+            <p id="updateMsg" style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;"></p>
+            <button id="btnInstalarUpdate" style="background: #15803d; width: 100%; font-size: 13px;">Baixar e Instalar Agora</button>
+        </div>
+        <div id="updateStatusText" style="display: none; margin-top: 10px; font-size: 13px; text-align: center; color: #64748b;"></div>
+
     </div>
     
     <script>

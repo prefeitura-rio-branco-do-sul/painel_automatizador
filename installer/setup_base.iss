@@ -24,6 +24,9 @@ SolidCompression=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+CloseApplications=yes
+RestartApplications=no
+CloseApplicationsTimeout=15
 
 [Languages]
 Name: "portuguesebr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
@@ -33,6 +36,7 @@ Name: "{commonappdata}\{#NomePublisher} {#NomeApp}"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\credentials"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\logs"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\chrome_profile"; Permissions: users-modify
+Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\updates"; Permissions: users-modify
 
 [Files]
 Source: "..\dist\main.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
