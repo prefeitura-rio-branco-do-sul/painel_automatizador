@@ -40,7 +40,6 @@ class AutomationService:
                     f"--window-position={pos_x},{pos_y}",
                     "--window-size=1920,1080",
                     "--disable-infobars",
-                    "--no-sandbox",
                     f"--auto-select-desktop-capture-source={capture_source}",
                     *Config.get_cast_browser_args()
                 ]

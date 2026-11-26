@@ -136,6 +136,7 @@ class DesktopWindowManager:
             {}
         )
         
+        user_data_dir = Config.get_webview_data_dir(admin=False)
         win_w, win_h = Config.get_adaptive_window_size(600, 640)
         webview.create_window(
             title=Config.TITULO_APP,
@@ -146,5 +147,5 @@ class DesktopWindowManager:
             resizable=True,
             min_size=(380, 420)
         )
-        webview.start()
+        webview.start(private_mode=False, storage_path=user_data_dir)
         return api.credentials

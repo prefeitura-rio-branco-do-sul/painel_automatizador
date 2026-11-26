@@ -26,6 +26,20 @@ def main():
 
     if "--config" in sys.argv:
         log.info("=== INICIANDO MODO DE CONFIGURAÇÃO ADMINISTRATIVA ===")
+        from src.core.config import Config
+        admin_data_dir = Config.get_webview_data_dir(admin=True)
+        os.environ["WEBVIEW2_USER_DATA_FOLDER"] = admin_data_dir
+
+        # Sanitizar TEMP e TMP herdados de elevação UAC sobre usuário comum
+        if os.environ.get("PROGRAMDATA"):
+            temp_admin_dir = os.path.join(os.environ["PROGRAMDATA"], Config.APP_DATA_FOLDER_NAME, "temp")
+            try:
+                os.makedirs(temp_admin_dir, exist_ok=True)
+                os.environ["TEMP"] = temp_admin_dir
+                os.environ["TMP"] = temp_admin_dir
+            except Exception:
+                pass
+
         from src.ui.config_view import AdminWindowManager
         AdminWindowManager.open()
         sys.exit(0)
@@ -63,6 +77,10 @@ def main():
                 log.warning("Modo --auto invocado, mas as credenciais estão ausentes ou incompletas. Recuando para a interface gráfica.")
 
         # 3. Rota Padrão (Interface Gráfica)
+        from src.core.config import Config
+        user_data_dir = Config.get_webview_data_dir(admin=False)
+        os.environ["WEBVIEW2_USER_DATA_FOLDER"] = user_data_dir
+
         try:
             import threading
             from src.services.updater import UpdaterService

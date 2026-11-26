@@ -17,6 +17,7 @@ updates/
 logs/
 *.log
 app.log
+.webview2*/
 
 # Build & Compilação (PyInstaller e Inno Setup)
 build/

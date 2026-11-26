@@ -236,7 +236,6 @@ class ScraperService:
                     "headless": True,
                     "args": [
                         "--disable-infobars",
-                        "--no-sandbox",
                         "--disable-gpu",
                         "--disable-extensions"
                     ]
