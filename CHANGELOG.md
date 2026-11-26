@@ -2,6 +2,17 @@
 
 Todas as modificações notáveis neste projeto são documentadas neste arquivo.
 
+## [1.9.1] - 2026-11-26
+
+### Corrigido
+- Removida a flag não suportada `--no-sandbox` do Chromium em `automation.py` e `scraper.py`, eliminando a barra de aviso persistente ao iniciar o navegador.
+- Corrigido erro de inicialização do Microsoft Edge WebView2 (`EBWebView`) ao abrir a interface de administração (`--config`) a partir de usuários não-administradores via elevação UAC.
+- Isolados os diretórios de dados do WebView2 (`webview2_user` no perfil local e `webview2_admin` em ProgramData) e configurado `WEBVIEW2_USER_DATA_FOLDER` explicitamente.
+- Sanitização das variáveis de ambiente (`TEMP` e `TMP`) no modo administrativo para prevenir bloqueios de ACL em perfis de outros usuários.
+- Atualizado o script do Inno Setup (`setup_base.iss`) com permissões explícitas (`users-modify`) para as novas pastas de cache e arquivos temporários.
+
+---
+
 ## [1.9.0] - 2026-11-25
 
 ### Adicionado

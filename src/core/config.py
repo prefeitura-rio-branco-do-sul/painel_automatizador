@@ -13,7 +13,7 @@ load_dotenv()
 
 class Config:
     TITULO_APP = "Painel de Chamamento - Inicializador Autônomo"
-    APP_VERSION = "1.9.0"
+    APP_VERSION = "1.9.1"
     REGISTRY_PATH = r"SOFTWARE\PMRBS\InicializadorPainelIDS"
     APP_DATA_FOLDER_NAME = "PMRBS Inicializador do Painel IDS"
 

@@ -216,7 +216,11 @@ def git_commit_and_tag(short_ver: str, new_semver: str, message: str, dry_run: b
         # Fallback para tag simples
         subprocess.run(["git", "tag", tag_name], cwd=ROOT_DIR)
     
-    log_success(f"Commit e Tag '{tag_name}' criados com sucesso!")
+    log_info(f"Enviando commits e tag '{tag_name}' para o repositório remoto (origin)...")
+    subprocess.run(["git", "push", "origin", "HEAD"], cwd=ROOT_DIR)
+    subprocess.run(["git", "push", "origin", tag_name], cwd=ROOT_DIR)
+
+    log_success(f"Commit e Tag '{tag_name}' criados e enviados com sucesso!")
     return True
 
 def publish_github_release(tag_name: str, installer_path: str, message: str, notes: str, dry_run: bool = False):
@@ -225,9 +229,10 @@ def publish_github_release(tag_name: str, installer_path: str, message: str, not
         log_warning("GitHub CLI (gh) não encontrado no PATH. Pulando publicação remota da release.")
         return
 
-    log_info(f"Publicando Release '{tag_name}' no GitHub com anexo do instalador...")
+    target_repo = "prefeitura-rio-branco-do-sul/painel_automatizador"
+    log_info(f"Publicando Release '{tag_name}' em '{target_repo}' com anexo do instalador...")
     if dry_run:
-        log_info(f"[DRY-RUN] Executaria: gh release create {tag_name} {installer_path} --title 'Versão {tag_name} - {message}'")
+        log_info(f"[DRY-RUN] Executaria: gh release create {tag_name} {installer_path} --repo {target_repo} --title 'Versão {tag_name} - {message}'")
         return
 
     cmd = [
@@ -236,6 +241,7 @@ def publish_github_release(tag_name: str, installer_path: str, message: str, not
         "create",
         tag_name,
         installer_path,
+        "--repo", target_repo,
         "--title", f"Versão {tag_name} - {message}",
         "--notes", notes or f"Release oficial {tag_name}"
     ]
