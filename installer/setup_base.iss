@@ -36,6 +36,9 @@ Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\credentials"; Permissions: us
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\logs"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\chrome_profile"; Permissions: users-modify
 Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\updates"; Permissions: users-modify
+Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\webview2_user"; Permissions: users-modify
+Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\webview2_admin"; Permissions: users-modify
+Name: "{commonappdata}\{#NomePublisher} {#NomeApp}\temp"; Permissions: users-modify
 
 [Files]
 Source: "..\dist\main.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs

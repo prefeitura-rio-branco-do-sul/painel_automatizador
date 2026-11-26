@@ -299,6 +299,60 @@ class Config:
         return updates_dir
 
     @staticmethod
+    def get_webview_data_dir(admin: bool = False) -> str:
+        r"""
+        Retorna o diretório seguro e isolado para o User Data Folder (UDF) do Microsoft Edge WebView2.
+        
+        Evita o erro 'Não foi possível criar o diretório de dados... EBWebView' quando uma sessão
+        de usuário comum (não-admin) solicita elevação administrativa (UAC / Over-The-Shoulder elevation).
+        Nesse cenário, o %TEMP% herdado pertence ao usuário comum e a sandbox do Edge elevado tem o acesso
+        negado pelo Windows por restrição de ACLs entre contas.
+
+        Args:
+            admin (bool): True se for a interface de administração (--config, com direitos de admin),
+                          False se for a interface normal do operador.
+        Returns:
+            str: Caminho absoluto para o diretório de dados do WebView2.
+        """
+        folder_name = "webview2_admin" if admin else "webview2_user"
+
+        if Config.is_compiled():
+            primary_path = os.path.join(
+                os.environ.get("PROGRAMDATA", r"C:\ProgramData"),
+                Config.APP_DATA_FOLDER_NAME,
+                folder_name
+            )
+        else:
+            primary_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", f".{folder_name}"))
+
+        try:
+            os.makedirs(primary_path, exist_ok=True)
+            test_file = os.path.join(primary_path, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            if os.path.exists(test_file):
+                os.remove(test_file)
+            return primary_path
+        except Exception:
+            # Fallback seguro: AppData Local do perfil do usuário em execução
+            fallback_path = os.path.join(
+                os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+                Config.APP_DATA_FOLDER_NAME,
+                folder_name
+            )
+            try:
+                os.makedirs(fallback_path, exist_ok=True)
+                return fallback_path
+            except Exception:
+                # Fallback extremo para a pasta Temp do sistema
+                system_temp = os.path.join(os.environ.get("SYSTEMROOT", r"C:\Windows"), "Temp", f"PMRBS_{folder_name}")
+                try:
+                    os.makedirs(system_temp, exist_ok=True)
+                    return system_temp
+                except Exception:
+                    return primary_path
+
+    @staticmethod
     def get_storage_path() -> str:
         """
         Obtém o caminho absoluto para o arquivo de armazenamento de credenciais compartilhado na máquina

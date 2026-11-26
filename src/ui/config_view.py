@@ -89,6 +89,7 @@ class AdminWindowManager:
             }
         )
 
+        admin_data_dir = Config.get_webview_data_dir(admin=True)
         win_w, win_h = Config.get_adaptive_window_size(650, 780)
         webview.create_window(
             title="Configuração Avançada - TI",
@@ -99,4 +100,4 @@ class AdminWindowManager:
             resizable=True,
             min_size=(380, 500)
         )
-        webview.start()
+        webview.start(private_mode=False, storage_path=admin_data_dir)
